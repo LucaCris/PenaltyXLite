@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:local="clr-namespace:Penaltyx"
+             xmlns:tt="clr-namespace:TouchTracking"
+             x:Class="Penaltyx.MainPage" BackgroundColor="Black">
+    <Grid x:Name="MainGrid" BackgroundColor="Black">
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="FieldRow" Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="FieldCol" Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.Effects>
+            <tt:TouchEffect Capture="True" TouchAction="OnTouchAction" />
+        </Grid.Effects>
+        <Image Grid.Column="1" Source="{local:ImageResource Penaltyx.Gfx.Field.jpg}" Aspect="AspectFit" />
+        <AbsoluteLayout x:Name="view" Grid.Column="1"/>
+        <BoxView Grid.RowSpan="2" BackgroundColor="Black" Margin="0,0,-8,0"/>
+        <BoxView Grid.Column="2" Grid.RowSpan="2" BackgroundColor="Black" Margin="-8,0,0,0"/>
+        <Grid x:Name="DataGrid" Grid.Row="1" Grid.Column="1" VerticalOptions="Start" BackgroundColor="DarkGreen">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
+        <Label x:Name="MsgCtrl" FontAttributes="Bold" Padding="5" TextColor="Yellow" BackgroundColor="DarkGreen" Grid.Row="1" Grid.Column="1" VerticalOptions="Start" VerticalTextAlignment="Center" HorizontalTextAlignment="Center"/>
+        <Label x:Name="PlayBtn" Grid.Row="0" Grid.Column="1" Text="❚❚" TextColor="Yellow" VerticalOptions="Start" HorizontalOptions="End" FontSize="22" Margin="0,8,16,0" IsVisible="False">
+            <Label.GestureRecognizers>
+                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped"/>
+            </Label.GestureRecognizers>
+        </Label>
+        <Label x:Name="Paused" Grid.Row="0" Grid.Column="1" Text="PAUSED" TextColor="White" FontAttributes="Bold" VerticalOptions="Start" HorizontalOptions="End" FontSize="22" Margin="0,8,42,0" IsVisible="False"/>
+        <Label x:Name="WellD" Grid.Row="0" Grid.Column="1" Text="WELL DONE!" TextColor="Blue" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center" ScaleX="0.75" IsVisible="True"/>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Audio\booo.wav" />
+    <None Remove="Audio\cheering.wav" />
+    <None Remove="Audio\combo.wav" />
+    <None Remove="Audio\foot.wav" />
+    <None Remove="Audio\gameover.wav" />
+    <None Remove="Audio\gasp.wav" />
+    <None Remove="Audio\goal.wav" />
+    <None Remove="Audio\hitw.wav" />
+    <None Remove="Audio\hitw2.wav" />
+    <None Remove="Audio\save.wav" />
+    <None Remove="Audio\welldone.wav" />
+    <None Remove="Gfx\Ball.png" />
+    <None Remove="Gfx\barrier.png" />
+    <None Remove="Gfx\Field.jpg" />
+    <None Remove="Gfx\gk.png" />
+    <None Remove="Gfx\gk2.png" />
+    <None Remove="Gfx\Shadow.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Audio\booo.wav" />
+    <EmbeddedResource Include="Audio\cheering.wav" />
+    <EmbeddedResource Include="Audio\combo.wav" />
+    <EmbeddedResource Include="Audio\foot.wav" />
+    <EmbeddedResource Include="Audio\gameover.wav" />
+    <EmbeddedResource Include="Audio\gasp.wav" />
+    <EmbeddedResource Include="Audio\goal.wav" />
+    <EmbeddedResource Include="Audio\hitw.wav" />
+    <EmbeddedResource Include="Audio\hitw2.wav" />
+    <EmbeddedResource Include="Audio\save.wav" />
+    <EmbeddedResource Include="Audio\welldone.wav" />
+    <EmbeddedResource Include="Gfx\Ball.png" />
+    <EmbeddedResource Include="Gfx\barrier.png" />
+    <EmbeddedResource Include="Gfx\Field.jpg" />
+    <EmbeddedResource Include="Gfx\gk.png" />
+    <EmbeddedResource Include="Gfx\gk2.png" />
+    <EmbeddedResource Include="Gfx\Shadow.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Xam.Plugin.SimpleAudioPlayer" Version="1.4.0" />
+    <PackageReference Include="Xamarin.Forms" Version="4.6.0.726" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.5.3.1" />
+  </ItemGroup>
+</Project>
