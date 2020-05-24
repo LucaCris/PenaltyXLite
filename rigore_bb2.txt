@@ -1,0 +1,574 @@
+.WORLDOFSOCCER
+.
+
+;modificato anche per odj (gamedat\dif=4)
+
+If IsHost CDir "OD:games/RIGORE"
+
+#RIN=3
+
+#RIRDY=0
+#RISHO=1
+#RIENT=2
+#RIRIM=3
+#RIOUT=4
+#RIGOL=5
+
+#NUM=25
+#ICOIN=35
+
+SpriteMode 2
+
+Macro timesnd
+End Macro
+
+INCDIR "ODSRC:supp/"
+INCLUDE "game2"
+INCDIR "ODSRC:supp/"
+INCLUDE "game_timebar"
+INCLUDE "startgame"
+
+NEWTYPE .ri
+  gol.b
+  bloc.b
+  lost.b
+  out.b
+  err.b
+
+  lastexit.w
+  xp.w
+  dxp.w
+  dlyp.b
+
+  xb.w
+  dxb.w
+
+  vol.q
+
+  mindist.w
+  numpalle.b
+  target.b
+
+  mode.b
+
+  barr.b
+
+  vel.q
+  score.l
+
+  bonus.b
+  super.b
+  sho.b
+
+  esci.b
+End NEWTYPE
+
+NEWTYPE .palla
+  x.q
+  y.q
+  dx.q
+  frm.q
+  status.b
+  dly.b
+
+  force.q
+  ax.q
+
+  outtm.w
+End NEWTYPE
+
+Dim palla.palla(#RIN)
+DEFTYPE .ri RI
+
+Statement INIT_GAME{}
+.INIT_GAME
+  SHARED gamedat
+
+  LoadFont 0,"odeon.font",15
+
+  Buffer 0,10240
+  Buffer 1,10240
+
+  BitMap 0,384,210,5
+  BitMap 1,384,210,5
+
+  BitMap 2,640,46,5
+  InitLayer 0,2
+  SetFont 0
+  DrwMode 0
+
+  LOADBAR{1}
+  LoadIFF "PIC/CAMPO",0,0
+  LoadPalette 0,"PIC/BARRIERA2",240
+  AGAPalRGB 0,0,0,0,0
+
+  LoadIFF KLANG{"PIC/PANEL"},2,1
+  AGAPalRGB 1,0,0,0,0
+
+  !COPYBM{0,1}
+  LOADBAR{50}
+
+  LoadShape 0 ,"PIC/PALLONE"
+  LoadShape 20,"PIC/PORT"
+  MidHandle 20
+  MidHandle 21
+
+  LoadShape 22,"PIC/BARRIERA2"
+  MidHandle 22
+
+  For t=0 To 17:MidHandle t:Next
+
+  GetaSprite 0,22
+  GetaSprite 1,20
+  GetaSprite 2,21
+
+;  LoadShape #FSHAPE+21,"PIC/ARROW"
+
+;  GetaSprite #FSPRITE+3,#FSHAPE+21
+
+  LoadShape 21,"PIC/SUPER"
+  LoadShape #NUM,"PIC/NUMERI"
+  LoadShape #ICOIN,"PIC/INSCOIN"
+
+  InitCopList 0,30,210,$13005,8,256,0
+  DisplayControls 0,0,32,$ee
+  DisplayPalette 0,0
+  DisplayBitMap 0,0
+
+  InitCopList 1,243,46,$13105,8,32,0
+  DisplayControls 1,0,32,0
+  DisplayPalette 1,1
+  DisplayBitMap 1,2
+
+  ZenSoundLoad 0,"SAMP/BARR"
+  ZenSoundLoad 1,"SAMP/BLIP"
+  ZenSoundLoad 2,"SAMP/FOLLA"
+  ZenSoundLoad 3,"SAMP/PALO"
+  LOADBAR{75}
+  ZenSoundLoad 4,"SAMP/SHOOT"
+  ZenSoundLoad 5,"SAMP/PARA"
+  ZenSoundLoad 6,"SAMP/FISCHIO"
+  ZenSoundLoad 7,"SAMP/FISCHIO_FIN"
+  ZenSoundLoad 8,"SAMP/SND"
+  LOADBAR{100}
+End Statement
+
+Statement RI_INIT_PALLA{n}
+  .
+  .RI_INIT_PALLE
+  SHARED palla(),RI
+  USEPATH palla(n)
+  BLITZ
+
+  If RI\mode=0
+    \x=342
+    \dx=4.5
+  Else
+    \x=55+n*70
+    \dx=0
+    \outtm=0
+  EndIf
+  \y=190
+  \frm=0
+  \status=#RIENT
+
+  RI\numpalle-1
+End Statement
+
+Statement RI_SHOW_PALLE{}
+  .RI_SHOW_PALLE
+  SHARED palla(),drw,RI
+  USEPATH palla(n)
+
+  For n=0 To #RIN
+    If \status
+      BBlit drw,\frm,Max(17,\x),\y,0
+    Else
+      BBlit drw,0,342,190,0
+    EndIf
+  Next
+
+  If RI\super
+    If drw=0 BBlit drw,21,122,144,0
+    RI\super-1
+  EndIf
+End Statement
+
+Statement RI_SHOOT{n,a}
+  .RI_SHOOT
+  SHARED palla(),RI
+  USEPATH palla(n)
+
+  \status=#RISHO
+  \dx=(160-\x)/213
+  \ax=0
+  If a>20 \ax=3
+  If a<-20 \ax=-3
+  \frm=9
+
+  \force=1
+  If TS_Z>300 \force=1.5
+
+  RI\sho=1
+End Statement
+
+Statement RI_GESTPALLE{}
+  .RI_GESTPALLE
+  SHARED palla(),RI,gamedat
+  USEPATH palla(n)
+
+  For n=0 To #RIN
+    Select \status
+      Case #RIRDY:                     ;PRONTA PER ENTRARE
+        If (RI\lastexit>RI\mindist OR (RI\lastexit>25 AND Rnd<.004)) AND RI\numpalle>0
+          RI\lastexit=0
+          RI_INIT_PALLA{n}
+        EndIf
+
+      Case #RISHO:                     ;CALCIATA
+        \frm+.21*\force
+        \x+(\dx+\ax)*\force
+        \y-3*\force
+        If \ax<-.01 OR \ax>.01 \ax*.9
+
+        If \frm>17
+          Select True
+            Case \x<54 OR \x>267:                     ;FUORI
+              RI\out+1:\status=#RIOUT
+
+            Case \x>71 AND \x<249:                    ;GOL
+              RI\gol+1:RI\vol=64
+              \dly=20:\y=68:\status=#RIGOL
+              If Ticks<25
+                RI\bonus+1
+                RI\super=80
+                RI\score+1500
+                ZenSoundPlay 8
+              EndIf
+              ResetTimer
+
+            Default
+              RI\out+1:\status=#RIRIM                 ;PALO
+              ZenSoundPlay 3
+
+          End Select
+        EndIf
+
+        If \y>130 AND \y<135 AND RI\barr=1
+          If Abs(\x-RI\xb)<55     ;BARRIERA
+            RI\bloc+1
+            \status=#RIRIM
+            ZenSoundPlay 0
+          EndIf
+        EndIf
+
+        If \y>75 AND \y<80
+          If Abs(\x-RI\xp)<30       ;PARATO
+            RI\bloc+1
+            \status=#RIRDY
+            RI\dlyp=20
+            RI\xp=QLimit(\x,60,260)
+            ZenSoundPlay 5
+          EndIf
+        EndIf
+
+      Case #RIENT:                     ;IN ROTOLAMENTO
+        \x-\dx
+        If RI\mode=0
+          \dx=QLimit(\dx-.05,RI\vel,10)
+          \frm=QWrap(\frm+.5,0,9)
+        Else
+          \outtm+1
+          If \outtm=200 \x=0:RI\lastexit=-30
+        EndIf
+        If \x<17 \status=#RIRDY:RI\lost+1:ZenSoundPlay 1
+
+      Case #RIRIM:
+        If \x<160 kk=-15 Else kk=15
+        \x+kk
+        \y+1+Rnd(2)
+        If \x>342 OR \x<17 \status=#RIRDY
+
+      Case #RIOUT:
+        If \x<160 kk=-2 Else kk=2
+        \x+kk
+        \frm=16+Rnd(2)
+        If \x>342 OR \x<17 \status=#RIRDY
+
+      Case #RIGOL:
+        \dly-1
+        \x+\dx*3
+        If \dly=0 \status=RIRDY
+    End Select
+  Next
+End Statement
+
+Statement RI_CALCIA{}
+  .RI_CALCIA
+  SHARED palla(),RI
+  USEPATH palla(n)
+
+  If leggixy{}
+    x=TS_X
+    y=TS_Y
+    If y<210
+      For n=0 To #RIN
+        If \status=#RIENT
+          a=\x-x
+          If a>-30 AND a<30 RI_SHOOT{n,a}:n=#RIN:ZenSoundPlay 4
+        EndIf
+      Next
+    Else
+      If y>230 AND x<50 RI\esci=1
+    EndIf
+  EndIf
+End Statement
+
+Statement RI_GAME{lev}
+  .
+  .RI_GAME
+  SHARED palla(),RI,shw,drw,global,param,TS,gamedat
+  USEPATH palla(n)
+
+  For n=0 To #RIN
+    \status=#RIRDY
+  Next
+
+  RI\gol=0,0,0,0
+  RI\bonus=0,0,0
+
+  RI\xp=160,3
+  RI\xb=160,-4
+
+  lev=Min(11,lev)
+
+  RI\vel=2+lev*.1
+
+  Select lev
+    Case 0:RI\numpalle=12, 1,0
+    Case 1:RI\numpalle=15, 3,0
+    Case 2:RI\numpalle=20, 6,1
+    Case 3:RI\numpalle=22, 6,0
+    Case 4:RI\numpalle=25, 8,0
+    Case 5:RI\numpalle=30,12,1
+    Case 6:RI\numpalle=30,12,0
+    Case 7:RI\numpalle=40,18,0
+    Case 8:RI\numpalle=40,20,1
+    Case 9:RI\numpalle=40,25,0
+    Case 10:RI\numpalle=20,20,0
+    Case 11:RI\numpalle=30,30,0
+  End Select
+
+  RI\numpalle+(gamedat\dif-2)*4
+
+  If gamedat\dif=4 AND lev<3
+    RI\barr=0
+  Else
+    RI\barr=1
+  EndIf
+
+  If RI\mode=0
+    RI\mindist=Max(35,100-lev*5)
+  Else
+    RI\mindist=10
+  EndIf
+
+  m$=M{"LIV"}+UStr$(lev+1)+" - "+M{"PREMI"}
+  Gosub MSG
+
+  Use BitMap 2
+  stampanum{RI\numpalle,155,26,#NUM,2,0}
+  stampanum{RI\target  ,263,26,#NUM,2,0}
+  stampanum{0          ,362,26,#NUM,2,0}
+  stampanum{0          ,462,26,#NUM,2,0}
+
+  TSFlush
+
+  RI\vol=40
+  ZenSoundPlay 2,RI\vol,0,3
+
+  aspetta{150}
+
+  For t=0 To 1
+    BitMapOutput t
+    Use BitMap t
+
+    m$=M{"LIV"}+UStr$(lev+1)
+    If lev>0 m$+" - "+M{"PUNTI"}+UStr$(RI\score)
+    Gosub MSG
+  Next
+
+  CoinAdd 0
+  shw=1:drw=0
+  tim=0
+  fulltim=0:initpalle=RI\numpalle
+  TSMode 1
+  Repeat
+    DisplayBitMap 0,shw
+    If WaitEsc Statement Return
+    TS\track=TSDMoved
+
+    Use BitMap drw
+    UnBuffer drw
+
+    USEPATH RI
+    \lastexit+1
+    fulltim+1
+
+    If \barr
+      \xb+\dxb
+      If \xb>240 OR \xb<80 \dxb=-\dxb
+      DisplaySprite 0,0,\xb,90,0
+    EndIf
+
+    If \dlyp=0
+      \xp+\dxp
+
+      If \xp>260 OR \xp<60
+        \dxp=-\dxp
+        \sho=0
+        \xp=QLimit(\xp,60,260)
+      Else
+        If Rnd<.01 AND last>50
+          last=0
+          \dxp=-\dxp
+        EndIf
+        last+1
+      EndIf
+
+      If \sho=1 AND lev>2 AND Rnd<.8 AND gamedat\dif<>4         ;portiere inteligente
+        If TS_X<\xp Then \dxp=-Abs(\dxp) Else \dxp=Abs(\dxp)
+        \sho=0
+      EndIf
+
+      DisplaySprite 0,1,\xp,52,4
+    Else
+      \dlyp-1
+      DisplaySprite 0,2,\xp,52,4
+    EndIf
+
+    RI_GESTPALLE{}
+    RI_SHOW_PALLE{}
+    RI_CALCIA{}
+    If \esci
+      m$=M{"SI"}+"@032@032@032"+M{"USC"}+"@032@032@032"+M{"NO"}
+      Gosub MSG
+      TSFlush
+      \esci=EXIT{0+220*1024}
+      m$=""
+      Gosub MSG
+    EndIf
+
+    \err=\bloc+\lost+\out
+
+    Use BitMap 2
+    qw=QWrap(qw+1,0,3)
+    If qw=0 stampanum{RI\numpalle,155,26,#NUM,2,0}
+    If qw=1 stampanum{RI\gol,362,26,#NUM,2,0}
+    If qw=2 stampanum{RI\err,462,26,#NUM,2,0}
+
+    \vol=QLimit(\vol-.5,10,64)
+    Volume 8,\vol
+
+    If RI\numpalle=0 tim+1
+    If \gol>=\target tim+0:If flaq=0 flaq=1:ZenSoundPlay 6,30
+
+    If CoinInserted
+      Format "00"
+      DrwMode 1
+      LText Str$(CoinGet),600,36
+      DrwMode 0
+      Format ""
+    EndIf
+
+    shw=1-shw
+    drw=1-drw
+  Until KeyCode=127 OR tim>=200 OR \esci
+  If \esci Then \gol=0
+
+  If KeyCode=127 \gol=\target
+
+  Use BitMap 0:UnBuffer 0
+  Use BitMap 1:UnBuffer 1
+
+  For n=0 To #RIN
+    palla(n)\status=#RIRDY
+  Next
+
+  BitMapOutput drw
+  If \gol>=\target
+;    pts=1000-\err*10-fulltim+initpalle*50
+    pts=1500-\err*60+\gol*250
+    m$=M{"LIVCOM"}+" - "+M{"PUNTI"}+UStr$(pts+RI\bonus*1500)
+    Gosub MSG
+    RI\score+pts
+    aspetta{150}
+  Else
+    ZenSoundPlay 7,50
+    m$=M{"PERSO"}
+    Gosub MSG
+  EndIf
+
+  Statement Return
+
+  MSG:
+    Use BitMap 2
+    Boxf 10,3,629,14,1
+    SetText 610,1,0
+;    Use TextLayer 0
+    NEWTEXT{15,13,"<CN1>"+m$}
+  Return
+End Statement
+
+AMIGA
+
+READ_CATALOG{0,KLANG{"OD:TESTI/RIGORE"}}
+
+INIT_GAME{}
+
+TS\copdef=TSCopDef(0,30, 210,6,1)
+TS\copdef+TSCopDef(1,243,46,0,2)
+
+TS_MOUSE{0,game\spr,0}
+
+USEPATH RI
+
+Repeat
+  If STARTGAME{RI\score} OR param\tdbg End
+;gamedat\dif=4
+  BLITZ
+  CreateDisplay 0,1
+
+  Use TextLayer 0
+  TSDim 320,256
+
+  \score=0
+  \esci=0
+
+  For t=0 To 11
+    RI_GAME{t}
+
+    If \gol<\target AND \esci=0
+      If param\torn=0
+        Use BitMap 2
+        Boxf 10,3,629,14,1
+        SetText 610,1,0
+        NEWTEXT{15,13,"<CN1>"+M{"SI"}+"@032@032@032"+M{"CONT"}+"@032@032@032"+M{"NO"}}
+
+        TSFlush
+        If CONTINUE{#ICOIN,546,23,0+220*1024}
+          t-1
+        Else
+          t=999
+        EndIf
+      Else
+        t=999
+      EndIf
+    EndIf
+    If \esci t=999
+  Next
+
+  aspetta{80}
+Forever
+
+
